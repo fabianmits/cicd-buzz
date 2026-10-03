@@ -66,6 +66,6 @@ jobs:
           PASSWORD=$(python3 -c "import os,xml.etree.ElementTree as ET;r=ET.fromstring(os.environ['PUBLISH_PROFILE']);print([p.get('userPWD') for p in r.findall('publishProfile') if p.get('publishMethod')=='MSDeploy'][0])")
           curl -X POST -u "$USERNAME:$PASSWORD" \
             --data-binary @release.zip \
-            "https://cicd-buzz-fsmits.scm.azurewebsites.net/api/zipdeploy" \
+            "https://cicd-buzz-fsmits-a3axa2dwh4dxcnf8.scm.westeurope-01.azurewebsites.net/api/zipdeploy" \
             --connect-timeout 30 --max-time 300 \
             --fail --show-error
