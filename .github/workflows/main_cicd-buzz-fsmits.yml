@@ -55,10 +55,17 @@ jobs:
         with:
           name: python-app
 
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
-        with:
-          app-name: 'cicd-buzz-fsmits'
-          slot-name: 'Production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+      - name: Zip artifact for deployment
+        run: zip -r release.zip . -x "antenv/*"
+
+      - name: Deploy via Kudu Zip Deploy
+        env:
+          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        run: |
+          USERNAME=$(python3 -c "import os,xml.etree.ElementTree as ET;r=ET.fromstring(os.environ['PUBLISH_PROFILE']);print([p.get('userName') for p in r.findall('publishProfile') if p.get('publishMethod')=='MSDeploy'][0])")
+          PASSWORD=$(python3 -c "import os,xml.etree.ElementTree as ET;r=ET.fromstring(os.environ['PUBLISH_PROFILE']);print([p.get('userPWD') for p in r.findall('publishProfile') if p.get('publishMethod')=='MSDeploy'][0])")
+          curl -X POST -u "$USERNAME:$PASSWORD" \
+            --data-binary @release.zip \
+            "https://cicd-buzz-fsmits.scm.azurewebsites.net/api/zipdeploy" \
+            --connect-timeout 30 --max-time 300 \
+            --fail --show-error
